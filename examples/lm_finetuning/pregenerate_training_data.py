@@ -261,8 +261,9 @@ def main():
             for line in tqdm(f, desc="Loading Dataset", unit=" lines"):
                 line = line.strip()
                 if line == "":
-                    docs.add_document(doc)
-                    doc = []
+                    if len(doc) > 0:
+                        docs.add_document(doc)
+                        doc = []
                 else:
                     tokens = tokenizer.tokenize(line)
                     doc.append(tokens)
