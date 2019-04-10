@@ -5,7 +5,7 @@ from tempfile import TemporaryDirectory
 import shelve
 
 from random import random, randint, shuffle, choice, sample
-from pytorch_pretrained_bert.tokenization import BertTokenizer
+from pytorch_pretrained_bert.dha_tokenization import DHATokenizer, DHAToken
 import numpy as np
 import json
 
@@ -231,10 +231,10 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('--train_corpus', type=Path, required=True)
     parser.add_argument("--output_dir", type=Path, required=True)
-    parser.add_argument("--bert_model", type=str, required=True,
-                        choices=["bert-base-uncased", "bert-large-uncased", "bert-base-cased",
-                                 "bert-base-multilingual", "bert-base-chinese"])
-    parser.add_argument("--do_lower_case", action="store_true")
+    # parser.add_argument("--bert_model", type=str, required=True,
+    #                     choices=["bert-base-uncased", "bert-large-uncased", "bert-base-cased",
+    #                              "bert-base-multilingual", "bert-base-chinese"])
+    # parser.add_argument("--do_lower_case", action="store_true")
 
     parser.add_argument("--reduce_memory", action="store_true",
                         help="Reduce memory usage for large datasets by keeping data on disc rather than in memory")
@@ -248,10 +248,12 @@ def main():
                         help="Probability of masking each token for the LM task")
     parser.add_argument("--max_predictions_per_seq", type=int, default=20,
                         help="Maximum number of tokens to mask in each sequence")
+    parser.add_argument("--vocab_file", type=str, required=True)
 
     args = parser.parse_args()
 
-    tokenizer = BertTokenizer.from_pretrained(args.bert_model, do_lower_case=args.do_lower_case)
+    # tokenizer = BertTokenizer.from_pretrained(args.bert_model, do_lower_case=args.do_lower_case)
+    tokenizer = DHATokenizer(args.vocab_file)
     vocab_list = list(tokenizer.vocab.keys())
     with DocumentDatabase(reduce_memory=args.reduce_memory) as docs:
         with args.train_corpus.open() as f:
@@ -275,7 +277,7 @@ def main():
                         docs, doc_idx, max_seq_length=args.max_seq_len, short_seq_prob=args.short_seq_prob,
                         masked_lm_prob=args.masked_lm_prob, max_predictions_per_seq=args.max_predictions_per_seq,
                         vocab_list=vocab_list)
-                    doc_instances = [json.dumps(instance) for instance in doc_instances]
+                    doc_instances = [json.dumps(instance, ensure_ascii=False) for instance in doc_instances]
                     for instance in doc_instances:
                         epoch_file.write(instance + '\n')
                         num_instances += 1

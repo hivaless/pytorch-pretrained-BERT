@@ -7,12 +7,13 @@ import random
 import numpy as np
 from collections import namedtuple
 from tempfile import TemporaryDirectory
+from pytorch_pretrained_bert.dha_tokenization import DHATokenizer, DHAToken
 
 from torch.utils.data import DataLoader, Dataset, RandomSampler
 from torch.utils.data.distributed import DistributedSampler
 from tqdm import tqdm
 
-from pytorch_pretrained_bert.modeling import BertForPreTraining
+from pytorch_pretrained_bert.modeling import BertForPreTraining, BertConfig
 from pytorch_pretrained_bert.tokenization import BertTokenizer
 from pytorch_pretrained_bert.optimization import BertAdam, warmup_linear
 
@@ -123,9 +124,10 @@ def main():
     parser = ArgumentParser()
     parser.add_argument('--pregenerated_data', type=Path, required=True)
     parser.add_argument('--output_dir', type=Path, required=True)
-    parser.add_argument("--bert_model", type=str, required=True,
+    parser.add_argument("--bert_model", type=str, required=False,
                         choices=["bert-base-uncased", "bert-large-uncased", "bert-base-cased",
                                  "bert-base-multilingual", "bert-base-chinese"])
+    parser.add_argument('--bert_config', type=str, required=False)
     parser.add_argument("--do_lower_case", action="store_true")
     parser.add_argument("--reduce_memory", action="store_true",
                         help="Store training data as on-disc memmaps to massively reduce memory usage")
@@ -167,6 +169,7 @@ def main():
                         type=int,
                         default=42,
                         help="random seed for initialization")
+    parser.add_argument("--vocab_file", type=str, required=True)
     args = parser.parse_args()
 
     assert args.pregenerated_data.is_dir(), \
@@ -217,7 +220,8 @@ def main():
         logging.warning(f"Output directory ({args.output_dir}) already exists and is not empty!")
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    tokenizer = BertTokenizer.from_pretrained(args.bert_model, do_lower_case=args.do_lower_case)
+    # tokenizer = BertTokenizer.from_pretrained(args.bert_model, do_lower_case=args.do_lower_case)
+    tokenizer = DHATokenizer(args.vocab_file)
 
     total_train_examples = 0
     for i in range(args.epochs):
@@ -230,7 +234,14 @@ def main():
         num_train_optimization_steps = num_train_optimization_steps // torch.distributed.get_world_size()
 
     # Prepare model
-    model = BertForPreTraining.from_pretrained(args.bert_model)
+    if args.bert_model:
+        model = BertForPreTraining.from_pretrained(args.bert_model)
+    elif args.bert_config:
+        bert_config = BertConfig.from_json_file(args.bert_config)
+        model = BertForPreTraining(bert_config)
+    else:
+        raise Exception('bert_model or bert_config must be provided.')
+
     if args.fp16:
         model.half()
     model.to(device)
