@@ -6,10 +6,9 @@ DHA example code for Python Wrapper
 """
 
 import dha
-import simplejson as json
+import json
 import collections
 import six
-import tensorflow as tf
 import os
 
 def convert_to_unicode(text):
@@ -35,7 +34,7 @@ def load_vocab(vocab_file):
     """Loads a vocabulary file into a dictionary."""
     vocab = collections.OrderedDict()
     index = 0
-    with tf.gfile.GFile(vocab_file, "r") as reader:
+    with open(vocab_file, "r") as reader:
         while True:
             token = convert_to_unicode(reader.readline())
             if not token:
