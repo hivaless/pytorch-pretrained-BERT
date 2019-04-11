@@ -251,11 +251,12 @@ def main():
     parser.add_argument("--max_predictions_per_seq", type=int, default=20,
                         help="Maximum number of tokens to mask in each sequence")
     parser.add_argument("--vocab_file", type=str, required=True)
+    parser.add_argument("--dha_max_workers", type=int, default=8)
 
     args = parser.parse_args()
 
     # tokenizer = BertTokenizer.from_pretrained(args.bert_model, do_lower_case=args.do_lower_case)
-    tokenizer = DHATokenizer(args.vocab_file, 8)
+    tokenizer = DHATokenizer(args.vocab_file, args.dha_max_workers)
     vocab_list = list(tokenizer.vocab.keys())
     with DocumentDatabase(reduce_memory=args.reduce_memory) as docs:
         with args.train_corpus.open() as f:
