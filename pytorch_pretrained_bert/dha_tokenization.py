@@ -77,15 +77,15 @@ def analyze_fn(args):
 
 
 class DHATokenizer(object):
-    def __init__(self, vocab_file, max_workers = None):
+    def __init__(self, vocab_file, max_workers = None, no_analyzer=False):
         self.vocab = load_vocab(vocab_file)
         self.inv_vocab = {v: k for k, v in self.vocab.items()}
         self.UNK_ID = self.vocab.get('[UNK]')
 
+        self.pool = None
         if max_workers:
             self.create_dha_pool(max_workers)
-        else:
-            self.pool = None
+        elif not no_analyzer:
             self.dha_analyzer = DHAAnalyzer()
 
     def create_dha_pool(self, max_workers):

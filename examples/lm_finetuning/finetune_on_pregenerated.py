@@ -221,7 +221,7 @@ def main():
     args.output_dir.mkdir(parents=True, exist_ok=True)
 
     # tokenizer = BertTokenizer.from_pretrained(args.bert_model, do_lower_case=args.do_lower_case)
-    tokenizer = DHATokenizer(args.vocab_file)
+    tokenizer = DHATokenizer(args.vocab_file, no_analyzer=True)
 
     total_train_examples = 0
     for i in range(args.epochs):
