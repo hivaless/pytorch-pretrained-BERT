@@ -201,6 +201,8 @@ def create_instances_from_document(
                     for j in range(a_end, len(current_chunk)):
                         tokens_b.extend(current_chunk[j])
                 truncate_seq_pair(tokens_a, tokens_b, max_num_tokens)
+                if len(tokens_a) == 0 or len(tokens_b) == 0:
+                    print('Wooow')
 
                 assert len(tokens_a) >= 1
                 assert len(tokens_b) >= 1
@@ -253,7 +255,7 @@ def main():
     args = parser.parse_args()
 
     # tokenizer = BertTokenizer.from_pretrained(args.bert_model, do_lower_case=args.do_lower_case)
-    tokenizer = DHATokenizer(args.vocab_file)
+    tokenizer = DHATokenizer(args.vocab_file, 8)
     vocab_list = list(tokenizer.vocab.keys())
     with DocumentDatabase(reduce_memory=args.reduce_memory) as docs:
         with args.train_corpus.open() as f:
@@ -262,11 +264,19 @@ def main():
                 line = line.strip()
                 if line == "":
                     if len(doc) > 0:
-                        docs.add_document(doc)
+                        doc_tokens = tokenizer.tokenize(doc)
+                        not_empty_doc_tokens = []
+                        for tokens in doc_tokens:
+                            if len(tokens) > 0:
+                                not_empty_doc_tokens.append(tokens)
+                        if len(not_empty_doc_tokens) > 0:
+                            docs.add_document(not_empty_doc_tokens)
                         doc = []
                 else:
-                    tokens = tokenizer.tokenize(line)
-                    doc.append(tokens)
+                    doc.append(line)
+                    # tokens = tokenizer.tokenize(line)
+                    # doc.append(tokens)
+
 
         args.output_dir.mkdir(exist_ok=True)
         for epoch in trange(args.epochs_to_generate, desc="Epoch"):
