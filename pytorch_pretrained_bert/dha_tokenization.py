@@ -5,7 +5,6 @@
 DHA example code for Python Wrapper
 """
 
-import dha
 import json
 import collections
 import six
@@ -50,6 +49,7 @@ DHAToken = collections.namedtuple('DHAToken', ['cpos', 'clen', 'str', 'tag'])
 
 class DHAAnalyzer(object):
     def __init__(self):
+        import dha
         self.coll_name = 'default'
         self.anal_name = 'hanl'
         self.options = ['sample|verb_root|ncp_root|-ncp_root|level_9|-d_tag|m_tag|pos_longest|-text|char_pos']
